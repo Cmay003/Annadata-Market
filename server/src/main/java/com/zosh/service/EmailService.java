@@ -31,14 +31,19 @@ public class EmailService {
     public void sendVerificationOtpEmail(String userEmail, String otp, String subject, String text) {
         String apiKey = resendApiKey != null ? resendApiKey.trim() : "";
         
-        // 🚀 If Resend API key is provided (starts with re_), send via HTTPS REST API (Port 443)
-        // This completely bypasses Railway SMTP port blocks!
+        // 🚀 1. Brevo HTTPS API (xkeysib-) — Sends to ANY recipient on the internet (Free 300/day, no domain required)
+        if (apiKey.startsWith("xkeysib-")) {
+            sendViaBrevoHttpApi(userEmail, otp, subject, text, apiKey);
+            return;
+        }
+
+        // 🚀 2. Resend HTTPS API (re_) — Sends to verified account or custom domain
         if (apiKey.startsWith("re_")) {
             sendViaResendHttpApi(userEmail, otp, subject, text, apiKey);
             return;
         }
 
-        // Fallback to standard SMTP
+        // 3. Fallback to standard SMTP
         try {
             if (javaMailSender == null) {
                 throw new IllegalStateException("JavaMailSender is not configured");
@@ -60,6 +65,46 @@ public class EmailService {
             System.err.println("⚠️ SMTP email send failed for " + userEmail + ": " + e.getMessage());
             System.out.println("🔑 [OTP FALLBACK FOR TESTING] OTP for " + userEmail + " is: " + otp);
             throw new RuntimeException("Email Send Failed: " + e.getMessage(), e);
+        }
+    }
+
+    private void sendViaBrevoHttpApi(String userEmail, String otp, String subject, String text, String apiKey) {
+        try {
+            String url = "https://api.brevo.com/v3/smtp/email";
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("api-key", apiKey);
+
+            String htmlBody = "<h2>" + subject + "</h2><p>" + text + "</p><h1 style='color: #16a34a; font-size: 32px;'>" + otp + "</h1>";
+
+            String senderAddress = (fromEmail != null && fromEmail.contains("@")) ? fromEmail.trim() : "annadata085@gmail.com";
+
+            Map<String, Object> senderMap = new HashMap<>();
+            senderMap.put("name", "Annadata Market");
+            senderMap.put("email", senderAddress);
+
+            Map<String, Object> recipientMap = new HashMap<>();
+            recipientMap.put("email", userEmail);
+
+            Map<String, Object> body = new HashMap<>();
+            body.put("sender", senderMap);
+            body.put("to", List.of(recipientMap));
+            body.put("subject", subject);
+            body.put("htmlContent", htmlBody);
+
+            HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+            ResponseEntity<String> response = restTemplate.postForEntity(url, requestEntity, String.class);
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                System.out.println("✅ Email sent successfully via Brevo HTTPS API to " + userEmail + ": " + response.getBody());
+            } else {
+                throw new RuntimeException("Brevo API returned status: " + response.getStatusCode() + " body: " + response.getBody());
+            }
+        } catch (Exception e) {
+            System.err.println("⚠️ Brevo HTTPS API send failed for " + userEmail + ": " + e.getMessage());
+            System.out.println("🔑 [OTP FALLBACK FOR TESTING] OTP for " + userEmail + " is: " + otp);
+            throw new RuntimeException("Brevo HTTPS API Send Failed: " + e.getMessage(), e);
         }
     }
 
