@@ -16,12 +16,12 @@ COPY src ./src
 RUN ./mvnw package -DskipTests -B
 
 # Stage 2: Runtime
-FROM eclipse-temurin:21-jre-alpine AS runtime
+FROM eclipse-temurin:21-jre-jammy AS runtime
 
 WORKDIR /app
 
-# Non-root user for security
-RUN addgroup -S annadata && adduser -S annadata -G annadata
+# Non-root user for security (use groupadd/useradd — Alpine addgroup/adduser crash on Railway)
+RUN groupadd -r annadata && useradd -r -g annadata annadata
 
 COPY --from=builder /app/target/*.jar app.jar
 
