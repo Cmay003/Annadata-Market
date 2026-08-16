@@ -17,19 +17,20 @@ public class EmailService {
     @Value("${spring.mail.username:}")
     private String fromEmail;
 
-    public void sendVerificationOtpEmail(String userEmail, String otp, String subject, String text) throws MessagingException {
+    public void sendVerificationOtpEmail(String userEmail, String otp, String subject, String text) {
 
         try {
             MimeMessage mimeMessage = javaMailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
             if (fromEmail != null && !fromEmail.trim().isEmpty()) {
-                helper.setFrom(fromEmail, "Annadata Market");
+                helper.setFrom(fromEmail.trim(), "Annadata Market");
             }
 
-            helper.setSubject(subject);
-            helper.setText(text + " " + otp, true);
             helper.setTo(userEmail);
+            helper.setSubject(subject);
+            helper.setText("<h2>" + subject + "</h2><p>" + text + "</p><h1 style='color: #16a34a; font-size: 32px;'>" + otp + "</h1>", true);
+
             javaMailSender.send(mimeMessage);
             System.out.println("✅ Email sent successfully to " + userEmail);
         } catch (Exception e) {
