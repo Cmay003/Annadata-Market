@@ -87,15 +87,8 @@ public class AppConfig {
             public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                 CorsConfiguration cfg = new CorsConfiguration();
 
-                // ✅ Production URL + localhost dono allowed
-                // Production deploy karte waqt FRONTEND_URL environment variable set karo
-                cfg.setAllowedOrigins(Arrays.asList(
-                    frontendUrl,             // ENV se: https://annadata-market.com ya localhost
-                    "http://localhost:5173", // Vite default
-                    "http://127.0.0.1:5173", // Vite alt
-                    "http://localhost:3000", // CRA fallback
-                    "http://127.0.0.1:3000"
-                ));
+                // Allow all origins (including Vercel deployment domains and localhost)
+                cfg.setAllowedOriginPatterns(Collections.singletonList("*"));
 
                 cfg.setAllowedMethods(Arrays.asList(
                     "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"

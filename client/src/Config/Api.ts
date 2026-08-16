@@ -1,8 +1,9 @@
 import axios from "axios";
 
-// Direct backend URL - all API calls go straight to Spring Boot
-// This avoids conflicts with Vite's client-side routing for /products, /home etc.
-export const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:5454";
+const rawApiUrl = (import.meta.env.VITE_API_URL || "http://127.0.0.1:5454").trim().replace(/\/+$/, "");
+export const API_URL = rawApiUrl.startsWith("http://") || rawApiUrl.startsWith("https://")
+  ? rawApiUrl
+  : `https://${rawApiUrl}`;
 
 export const api = axios.create({
   baseURL: API_URL,
