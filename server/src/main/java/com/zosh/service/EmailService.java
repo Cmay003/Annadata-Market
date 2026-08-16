@@ -37,6 +37,7 @@ public class EmailService {
             System.err.println("⚠️ SMTP email send failed for " + userEmail + ": " + e.getMessage());
             e.printStackTrace();
             System.out.println("🔑 [OTP FALLBACK FOR TESTING] OTP for " + userEmail + " is: " + otp);
+            throw new RuntimeException("SMTP Send Failed: " + e.getMessage(), e);
         }
     }
 }
