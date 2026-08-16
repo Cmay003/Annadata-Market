@@ -6,6 +6,9 @@ FROM public.ecr.aws/amazoncorretto/amazoncorretto:21-al2023
 
 WORKDIR /app
 
+# Install tar — required by Maven wrapper to extract Maven binary (not in AL2023 minimal image)
+RUN yum install -y tar
+
 # Copy Maven wrapper and pom first (layer caching for dependencies)
 COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
