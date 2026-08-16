@@ -34,7 +34,18 @@ import jakarta.validation.Valid;
 public class AuthController {
 
     private final AuthService authService;
+    private final com.zosh.service.EmailService emailService;
 
+    @org.springframework.web.bind.annotation.GetMapping("/test-email")
+    public ResponseEntity<String> testEmail(@RequestParam String email) {
+        try {
+            emailService.sendVerificationOtpEmail(email, "999888", "Test OTP Subject", "Your Test OTP is:");
+            return ResponseEntity.ok("SUCCESS: Email sent to " + email);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("ERROR: " + e.getClass().getName() + " - " + e.getMessage());
+        }
+    }
 
     @PostMapping("/sent/login-signup-otp")
     public ResponseEntity<ApiResponse> sentLoginOtp(
