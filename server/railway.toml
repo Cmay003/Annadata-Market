@@ -1,0 +1,12 @@
+# Railway config for Annadata Backend
+# This file is in server/ which is the Root Directory configured in Railway dashboard
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/actuator/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
