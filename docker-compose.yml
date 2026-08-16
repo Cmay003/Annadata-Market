@@ -1,0 +1,71 @@
+version: '3.9'
+
+# Annadata — Local Development Docker Compose
+# Usage:
+#   1. Copy server/.env.example → server/.env
+#   2. Copy client/.env.example → client/.env
+#   3. Fill in real values
+#   4. docker compose up -d
+
+services:
+
+  # MySQL 8 Database
+  db:
+    image: mysql:8.0
+    container_name: annadata-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-localdevpassword}
+      MYSQL_DATABASE: ${DB_NAME:-annadata}
+      MYSQL_USER: ${DB_USERNAME:-annadata_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-localdevpassword}
+    ports:
+      - "3306:3306"
+    volumes:
+      - annadata_db_data:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      timeout: 20s
+      retries: 10
+
+  # Spring Boot Backend Server
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: annadata-server
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - ./server/.env
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "${PORT:-5454}:${PORT:-5454}"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:${PORT:-5454}/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # React Frontend Client (production build via Nginx)
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: annadata-client
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - "80:80"
+    environment:
+      VITE_API_URL: http://server:${PORT:-5454}
+
+volumes:
+  annadata_db_data:
+    driver: local

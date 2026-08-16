@@ -1,0 +1,19 @@
+package com.zosh.service;
+
+import com.zosh.exception.ProductException;
+import com.zosh.model.Cart;
+import com.zosh.model.CartItem;
+import com.zosh.model.Product;
+import com.zosh.model.User;
+
+public interface CartService {
+
+    public CartItem addCartItem(User user,
+            Product product,
+            String size,
+            int quantity, Integer weight,
+            String unit) throws ProductException;
+
+    public Cart findUserCart(User user);
+
+}

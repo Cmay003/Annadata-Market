@@ -1,0 +1,39 @@
+# Annadata — Root .gitignore
+
+# Environment & Secrets
+# CRITICAL: Never commit real env files
+.env
+.env.*
+!.env.example
+*.env
+
+# Build & Node Artifacts
+node_modules/
+target/
+dist/
+dist-ssr/
+dev-dist/
+build/
+*.jar
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# Misc
+fix_constraints.sql
