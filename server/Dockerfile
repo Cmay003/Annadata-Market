@@ -6,9 +6,8 @@ FROM public.ecr.aws/amazoncorretto/amazoncorretto:21-al2023
 
 WORKDIR /app
 
-# Install tar + findutils — required by Maven wrapper (not in AL2023 minimal image)
-# AL2023 uses dnf (yum is a compatibility alias that may not be present)
-RUN dnf install -y tar findutils && dnf clean all
+# Install tar + gzip + findutils — all required by Maven wrapper to extract .tar.gz Maven binary
+RUN dnf install -y tar gzip findutils && dnf clean all
 
 # Copy Maven wrapper and pom first (layer caching for dependencies)
 COPY .mvn/ .mvn/
