@@ -1,8 +1,9 @@
 # Annadata Backend — Dockerfile
 # Multi-stage build: Maven build → slim JRE runtime image
+# Uses Amazon Corretto from ECR Public (no Docker Hub rate limits on Railway)
 
 # Stage 1: Build
-FROM eclipse-temurin:21-jdk-alpine AS builder
+FROM public.ecr.aws/amazoncorretto/amazoncorretto:21-al2023 AS builder
 
 WORKDIR /app
 
@@ -16,11 +17,11 @@ COPY src ./src
 RUN ./mvnw package -DskipTests -B
 
 # Stage 2: Runtime
-FROM eclipse-temurin:21-jre-jammy AS runtime
+FROM public.ecr.aws/amazoncorretto/amazoncorretto:21-al2023-headless AS runtime
 
 WORKDIR /app
 
-# Non-root user for security (use groupadd/useradd — Alpine addgroup/adduser crash on Railway)
+# Non-root user for security
 RUN groupadd -r annadata && useradd -r -g annadata annadata
 
 COPY --from=builder /app/target/*.jar app.jar
