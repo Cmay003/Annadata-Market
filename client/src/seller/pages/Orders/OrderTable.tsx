@@ -328,14 +328,19 @@ export default function OrderTable() {
                   <StyledTableCell align="right">
 
                     {item.orderStatus === "DELIVERED" ||
-                      item.orderStatus === "CANCELLED" ? (
+                      item.orderStatus === "CANCELLED" ||
+                      item.orderStatus === "IN_TRANSIT" ||
+                      item.orderStatus === "READY_FOR_PICKUP" ? (
 
                       <Button
                         size="small"
                         disabled
                         color="inherit"
+                        sx={{ fontWeight: 600 }}
                       >
-                        Locked
+                        {item.orderStatus === "READY_FOR_PICKUP" ? "🚚 Awaiting Pickup" :
+                         item.orderStatus === "IN_TRANSIT" ? "🛵 In Transit" :
+                         item.orderStatus === "DELIVERED" ? "✅ Delivered" : "Cancelled"}
                       </Button>
 
                     ) : (
@@ -380,26 +385,6 @@ export default function OrderTable() {
                               }
                             >
                               Ready For Pickup
-                            </MenuItem>
-                          )}
-
-                          {item.orderStatus === "READY_FOR_PICKUP" && (
-                            <MenuItem
-                              onClick={() =>
-                                handleUpdateOrder(item.id, "IN_TRANSIT")
-                              }
-                            >
-                              Start Delivery
-                            </MenuItem>
-                          )}
-
-                          {item.orderStatus === "IN_TRANSIT" && (
-                            <MenuItem
-                              onClick={() =>
-                                handleUpdateOrder(item.id, "DELIVERED")
-                              }
-                            >
-                              Mark Delivered
                             </MenuItem>
                           )}
 

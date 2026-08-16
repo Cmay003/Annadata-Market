@@ -57,6 +57,10 @@ public class SellerOrderController {
             @PathVariable OrderStatus orderStatus
     ) throws OrderException {
 
+        if (orderStatus == OrderStatus.IN_TRANSIT || orderStatus == OrderStatus.DELIVERED) {
+            throw new OrderException("Farmers can only update order status up to READY_FOR_PICKUP. Delivery and OTP verification are handled by the delivery partner.");
+        }
+
         Order orders=orderService.updateOrderStatus(orderId,orderStatus);
 
         return new ResponseEntity<>(orders,HttpStatus.ACCEPTED);
