@@ -1,0 +1,11 @@
+# Nixpacks build config for Annadata Spring Boot backend
+# Railway will use this when Root Directory is set to "server"
+
+[phases.build]
+cmds = [
+  "chmod +x mvnw",
+  "./mvnw package -DskipTests -B"
+]
+
+[start]
+cmd = "java -Djava.security.egd=file:/dev/./urandom -Dspring.profiles.active=prod -jar target/*.jar"
