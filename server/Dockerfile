@@ -1,9 +1,8 @@
 # Annadata Backend — Dockerfile
-# Multi-stage build: Maven build → slim JRE runtime image
-# Uses Amazon Corretto from ECR Public (no Docker Hub rate limits on Railway)
+# Single-stage build to avoid Railway network issues with second image pulls
+# Amazon Corretto 21 from ECR Public (no Docker Hub rate limits)
 
-# Stage 1: Build
-FROM public.ecr.aws/amazoncorretto/amazoncorretto:21-al2023 AS builder
+FROM public.ecr.aws/amazoncorretto/amazoncorretto:21-al2023
 
 WORKDIR /app
 
@@ -16,17 +15,12 @@ RUN chmod +x mvnw && ./mvnw dependency:go-offline -B
 COPY src ./src
 RUN ./mvnw package -DskipTests -B
 
-# Stage 2: Runtime
-FROM public.ecr.aws/amazoncorretto/amazoncorretto:21-al2023-headless AS runtime
-
-WORKDIR /app
-
 # Non-root user for security
 RUN groupadd -r annadata && useradd -r -g annadata annadata
 
-COPY --from=builder /app/target/*.jar app.jar
+# Move jar to a clean location and set ownership
+RUN cp target/*.jar app.jar && chown annadata:annadata app.jar
 
-RUN chown annadata:annadata app.jar
 USER annadata
 
 EXPOSE 5454
@@ -35,3 +29,4 @@ ENTRYPOINT ["java", \
   "-Djava.security.egd=file:/dev/./urandom", \
   "-Dspring.profiles.active=prod", \
   "-jar", "app.jar"]
+
