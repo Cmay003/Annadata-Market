@@ -56,7 +56,8 @@ export default defineConfig(({ mode }) => {
           ]
         },
         workbox: {
-          globPatterns: ['**/*.{js,css,html,ico,png,svg,jpeg,jpg,woff2}'],
+          globPatterns: ['**/*.{js,css,html,ico,svg,woff2}'],
+          maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4 MiB — logo2.png is 2.32 MB
           navigateFallback: '/index.html',
           runtimeCaching: [
             {
