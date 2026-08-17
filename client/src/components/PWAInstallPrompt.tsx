@@ -1,25 +1,43 @@
 import { useEffect, useState } from "react";
 
 const DISMISSED_KEY = "pwa_install_dismissed";
+const IOS_DISMISSED_KEY = "pwa_ios_dismissed";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
+// Detect iOS Safari (not already installed as PWA)
+const isIos = () =>
+  /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+
+const isInStandaloneMode = () =>
+  ("standalone" in window.navigator && (window.navigator as any).standalone) ||
+  window.matchMedia("(display-mode: standalone)").matches;
+
 const PWAInstallPrompt = () => {
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
-  const [showBanner, setShowBanner] = useState(false);
+  const [showAndroidBanner, setShowAndroidBanner] = useState(false);
+  const [showIosBanner, setShowIosBanner] = useState(false);
 
   useEffect(() => {
+    // ── iOS banner ────────────────────────────────────────────
+    if (isIos() && !isInStandaloneMode()) {
+      const dismissed = localStorage.getItem(IOS_DISMISSED_KEY);
+      if (!dismissed) setShowIosBanner(true);
+      return;
+    }
+
+    // ── Android / Desktop banner ──────────────────────────────
     const wasDismissed = localStorage.getItem(DISMISSED_KEY);
     if (wasDismissed) return;
 
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setShowBanner(true);
+      setShowAndroidBanner(true);
     };
 
     window.addEventListener("beforeinstallprompt", handler);
@@ -30,39 +48,57 @@ const PWAInstallPrompt = () => {
     if (!deferredPrompt) return;
     await deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === "accepted") {
-      setShowBanner(false);
-    }
+    if (outcome === "accepted") setShowAndroidBanner(false);
     setDeferredPrompt(null);
   };
 
-  const handleDismiss = () => {
+  const handleAndroidDismiss = () => {
     localStorage.setItem(DISMISSED_KEY, "true");
-    setShowBanner(false);
+    setShowAndroidBanner(false);
   };
 
-  if (!showBanner) return null;
+  const handleIosDismiss = () => {
+    localStorage.setItem(IOS_DISMISSED_KEY, "true");
+    setShowIosBanner(false);
+  };
+
+  // ── iOS instruction banner ────────────────────────────────────────────────
+  if (showIosBanner) {
+    return (
+      <div style={styles.overlay}>
+        <div style={styles.banner}>
+          <button style={styles.closeBtn} onClick={handleIosDismiss} aria-label="Close">✕</button>
+          <img src="/logo2.png" alt="Annadata Logo" style={styles.logo} />
+          <div style={styles.textSection}>
+            <p style={styles.title}>Install Annadata App</p>
+            <p style={styles.subtitle}>
+              Tap&nbsp;
+              <span style={styles.shareIcon}>⬆️</span>
+              &nbsp;<strong>Share</strong>&nbsp;→&nbsp;
+              <strong>"Add to Home Screen"</strong>
+            </p>
+          </div>
+        </div>
+        {/* Arrow pointing to Safari share button at bottom */}
+        <div style={styles.arrow}>▼</div>
+      </div>
+    );
+  }
+
+  // ── Android / Desktop install banner ─────────────────────────────────────
+  if (!showAndroidBanner) return null;
 
   return (
     <div style={styles.overlay}>
       <div style={styles.banner}>
-        {/* Close button */}
-        <button style={styles.closeBtn} onClick={handleDismiss} aria-label="Close">
-          ✕
-        </button>
-
-        {/* Icon */}
+        <button style={styles.closeBtn} onClick={handleAndroidDismiss} aria-label="Close">✕</button>
         <img src="/logo2.png" alt="Annadata Logo" style={styles.logo} />
-
-        {/* Text */}
         <div style={styles.textSection}>
           <p style={styles.title}>Install Annadata App!</p>
           <p style={styles.subtitle}>
             Add to home screen - fast, offline &amp; native app-like experience
           </p>
         </div>
-
-        {/* Install Button */}
         <button style={styles.installBtn} onClick={handleInstall}>
           Install App
         </button>
@@ -79,8 +115,15 @@ const styles: Record<string, React.CSSProperties> = {
     right: 0,
     zIndex: 9999,
     display: "flex",
-    justifyContent: "center",
+    flexDirection: "column",
+    alignItems: "center",
     padding: "0 12px 16px",
+  },
+  arrow: {
+    fontSize: "22px",
+    color: "#16a34a",
+    marginTop: "4px",
+    animation: "bounce 1s infinite",
   },
   banner: {
     background: "linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%)",
@@ -127,9 +170,12 @@ const styles: Record<string, React.CSSProperties> = {
   },
   subtitle: {
     margin: "4px 0 0",
-    fontSize: "12px",
+    fontSize: "13px",
     color: "#4b5563",
-    lineHeight: 1.4,
+    lineHeight: 1.5,
+  },
+  shareIcon: {
+    fontSize: "16px",
   },
   installBtn: {
     background: "linear-gradient(135deg, #16a34a, #15803d)",
